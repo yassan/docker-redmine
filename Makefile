@@ -49,8 +49,8 @@ COMPOSE = COMPOSE_PROJECT_NAME=$(PROJECT_NAME) \
 
 TEST_RELEASE_COMPOSE = $(COMPOSE) -f docker-compose.yml -f docker-compose.test-release.yml
 
-.PHONY: all help build up down logs ps restart quickstart stop purge test-release prepare-dirs generate-certs clean release \
-	build-redmine build-redmica up-redmine up-redmica down-redmine down-redmica logs-redmine logs-redmica
+.PHONY: all help build up down logs config ps restart quickstart stop purge test-release prepare-dirs generate-certs clean release \
+	build-redmine build-redmica up-redmine up-redmica down-redmine down-redmica logs-redmine logs-redmica config-redmine config-redmica
 
 all: build
 
@@ -93,6 +93,9 @@ restart: down up
 
 logs:
 	@$(COMPOSE) logs -f
+
+config:
+	@$(COMPOSE) config
 
 ps:
 	@$(COMPOSE) ps

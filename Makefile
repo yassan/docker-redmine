@@ -2,6 +2,8 @@ IMAGE_REPO ?= sameersbn/redmine
 FLAVOR ?= redmine
 VERSION ?= 6.1.2
 TZ ?= Asia/Tokyo
+CERTS_DIR=certs
+CERT_FILES=$(CERTS_DIR)/redmine.crt $(CERTS_DIR)/dhparam.pem
 
 ifeq ($(FLAVOR),redmine)
 APP_PORT ?= 10083
@@ -44,6 +46,8 @@ COMPOSE = COMPOSE_PROJECT_NAME=$(PROJECT_NAME) \
 	DB_PASS=$(DB_PASS) \
 	DB_NAME=$(DB_NAME) \
 	docker compose
+
+TEST_RELEASE_COMPOSE = $(COMPOSE) -f docker-compose.yml -f docker-compose.test-release.yml
 
 .PHONY: all help build up down logs ps restart quickstart stop purge test-release prepare-dirs generate-certs clean release \
 	build-redmine build-redmica up-redmine up-redmica down-redmine down-redmica logs-redmine logs-redmica
@@ -100,11 +104,18 @@ stop: down
 purge:
 	@$(COMPOSE) down -v
 
-test-release: generate-certs prepare-dirs
-	@echo "Starting test release for $(FLAVOR) $(VERSION)"
-	sudo cp -rf $(CERTS_DIR) $(BASE_DIR)/
-	@$(COMPOSE) down
-	@$(COMPOSE) up --build
+test-release: generate-certs
+	@echo Clean old run
+	sudo rm -rf $(DATA_DIR)
+	sudo mkdir -p $(DATA_DIR)/certs
+	sudo cp -f $(CERTS_DIR)/redmine.key $(DATA_DIR)/certs/
+	sudo cp -f $(CERTS_DIR)/redmine.crt $(DATA_DIR)/certs/
+	sudo cp -f $(CERTS_DIR)/dhparam.pem $(DATA_DIR)/certs/
+	sudo chmod 400 $(DATA_DIR)/certs/redmine.key
+	$(TEST_RELEASE_COMPOSE) down
+	$(TEST_RELEASE_COMPOSE) config
+	$(TEST_RELEASE_COMPOSE) build
+	$(TEST_RELEASE_COMPOSE) up
 
 generate-certs: $(CERT_FILES)
 

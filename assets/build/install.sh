@@ -46,7 +46,10 @@ fi
 echo "Extracting..."
 exec_as_redmine tar -zxf ${REDMINE_CACHE_DIR}/redmine-${REDMINE_VERSION}.tar.gz --strip=1 -C ${REDMINE_INSTALL_DIR}
 
-# Delete test: puma
+# Normalize runtime gems at build time.
+# Re-add puma and related runtime gems explicitly so they remain available
+# for the production nginx + puma runtime managed by supervisor, even if
+# the upstream Gemfile changes grouping or declaration style.
 sed -i \
   -e '/gem .puma./d' \
   "${REDMINE_INSTALL_DIR}/Gemfile"

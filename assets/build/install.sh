@@ -85,6 +85,10 @@ if [[ -d ${GEM_CACHE_DIR} ]]; then
 fi
 exec_as_redmine bundle config set path "${REDMINE_INSTALL_DIR}/vendor/bundle"
 exec_as_redmine bundle config set without development test
+
+# Prefer system libxml2/libxslt for nokogiri to improve native build stability.
+exec_as_redmine bundle config set build.nokogiri --use-system-libraries
+
 exec_as_redmine bundle install -j$(nproc)
 rm -f ${REDMINE_INSTALL_DIR}/config/database.yml
 

@@ -48,10 +48,10 @@ The flavor is selected at build time through `REDMINE_FLAVOR`, and the applicati
 
 The main operational entrypoints in this repository are:
 
-- [`Makefile`](/home/yassan/repo/yassan/redmine-osaka/docker-redmine/Makefile:1): build, startup, logs, config, release helpers
-- [`Dockerfile`](/home/yassan/repo/yassan/redmine-osaka/docker-redmine/Dockerfile:1): common image definition
-- [`docker-compose.yml`](/home/yassan/repo/yassan/redmine-osaka/docker-redmine/docker-compose.yml:1): PostgreSQL-backed runtime
-- [`assets/build/install.sh`](/home/yassan/repo/yassan/redmine-osaka/docker-redmine/assets/build/install.sh:1): flavor-aware install logic
+- [`Makefile`](./Makefile): build, startup, logs, config, release helpers
+- [`Dockerfile`](./Dockerfile): common image definition
+- [`docker-compose.yml`](./docker-compose.yml): PostgreSQL-backed runtime
+- [`assets/build/install.sh`](./assets/build/install.sh): flavor-aware install logic
 
 ## Quick Start
 
@@ -177,7 +177,7 @@ These directories are created by `make up` via the `prepare-dirs` target.
 
 ## Image Behavior
 
-The image is built from a single [`Dockerfile`](/home/yassan/repo/yassan/redmine-osaka/docker-redmine/Dockerfile:1) and switches behavior by flavor:
+The image is built from a single [`Dockerfile`](./Dockerfile) and switches behavior by flavor:
 
 - `REDMINE_FLAVOR=redmine` downloads Redmine from `redmine.org`
 - `REDMINE_FLAVOR=redmica` downloads Redmica from `github.com/redmica/redmica`
@@ -188,11 +188,11 @@ The build installs the application, bundles gems, and prepares an nginx + puma r
 
 This repository still contains additional compose examples inherited from upstream, such as:
 
-- [`docker-compose-mysql.yml`](/home/yassan/repo/yassan/redmine-osaka/docker-redmine/docker-compose-mysql.yml:1)
-- [`docker-compose-mariadb.yml`](/home/yassan/repo/yassan/redmine-osaka/docker-redmine/docker-compose-mariadb.yml:1)
-- [`docker-compose-sqlite3.yml`](/home/yassan/repo/yassan/redmine-osaka/docker-redmine/docker-compose-sqlite3.yml:1)
-- [`docker-compose-ssl.yml`](/home/yassan/repo/yassan/redmine-osaka/docker-redmine/docker-compose-ssl.yml:1)
-- [`docker-compose-memcached.yml`](/home/yassan/repo/yassan/redmine-osaka/docker-redmine/docker-compose-memcached.yml:1)
+- [`docker-compose-mysql.yml`](./docker-compose-mysql.yml)
+- [`docker-compose-mariadb.yml`](./docker-compose-mariadb.yml)
+- [`docker-compose-sqlite3.yml`](./docker-compose-sqlite3.yml)
+- [`docker-compose-ssl.yml`](./docker-compose-ssl.yml)
+- [`docker-compose-memcached.yml`](./docker-compose-memcached.yml)
 
 Treat them as secondary examples. The primary supported path in this fork is the default PostgreSQL-based `docker-compose.yml`.
 
@@ -209,7 +209,7 @@ The default compose path in this repository actively uses:
 - mail settings: `SMTP_*`
 - incoming mail settings: `IMAP_*`
 
-The runtime also supports additional options implemented in [`assets/runtime/functions`](/home/yassan/repo/yassan/redmine-osaka/docker-redmine/assets/runtime/functions:1), including:
+The runtime also supports additional options implemented in [`assets/runtime/functions`](./assets/runtime/functions), including:
 
 - `DATABASE_URL`
 - `MEMCACHE_HOST`, `MEMCACHE_PORT`
@@ -289,7 +289,7 @@ The container entrypoint still exposes the main maintenance commands:
 - `app:backup:create`
 - `app:backup:restore`
 
-These are defined in [`entrypoint.sh`](/home/yassan/repo/yassan/redmine-osaka/docker-redmine/entrypoint.sh:1).
+These are defined in [`entrypoint.sh`](./entrypoint.sh).
 
 ### Rake Tasks
 
@@ -356,7 +356,7 @@ When bumping versions:
 - verify the target version builds cleanly
 - confirm the runtime boots with the default PostgreSQL compose setup
 - review plugin and theme breakage risk separately
-- document notable version changes in [`Changelog.md`](/home/yassan/repo/yassan/redmine-osaka/docker-redmine/Changelog.md:1) when appropriate
+- document notable version changes in [`Changelog.md`](./Changelog.md) when appropriate
 
 ## Differences From Upstream
 

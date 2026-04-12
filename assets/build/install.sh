@@ -46,53 +46,31 @@ fi
 echo "Extracting..."
 exec_as_redmine tar -zxf ${REDMINE_CACHE_DIR}/redmine-${REDMINE_VERSION}.tar.gz --strip=1 -C ${REDMINE_INSTALL_DIR}
 
-# HACK: we want both the pg and mysql2 gems installed, so we remove the
-#       respective lines and add them at the end of the Gemfile so that they
-#       are both installed.
-PG_GEM=$(grep 'gem .pg.' ${REDMINE_INSTALL_DIR}/Gemfile | awk '{gsub(/^[ \t]+|[ \t]+$/,""); print;}')
-MYSQL2_GEM=$(grep 'gem .mysql2.' ${REDMINE_INSTALL_DIR}/Gemfile | awk '{gsub(/^[ \t]+|[ \t]+$/,""); print;}')
-# SQLITE line spans 2 lines until after this commit: https://github.com/redmine/redmine/commit/dc05c52e5a25b43c49246a952607551bf0d96f29#diff-8b7db4d5cc4b8f6dc8feb7030baa2478
-# The 2 lines one has RUBY_VERSION in it
-SQLITE3_2LINES_GEM=$(grep -A1 -e 'gem .sqlite3..*RUBY_VERSION' "${REDMINE_INSTALL_DIR}/Gemfile" | awk '{gsub(/^[ \t ]+|[ \t ]+$/,    ""); print;}')
-SQLITE3_GEM=$(grep 'gem .sqlite3.' "${REDMINE_INSTALL_DIR}/Gemfile" | awk '{gsub(/^[ \t]+|[ \t]+$/,""); print;}')
-
-[ -z "$PG_GEM" ] && (echo "Error couldn't find gem pg, update instal.sh"; exit 1)
-[ -z "$MYSQL2_GEM" ] && (echo "Error couldn't find gem mysql2, update instal.sh"; exit 1)
-[ -z "$SQLITE3_GEM" ] && (echo "Error couldn't find gem sqlite3, update instal.sh"; exit 1)
-
-sed -i \
-  -e '/gem .pg./d' \
-  -e '/gem .mysql2./d' \
-  ${REDMINE_INSTALL_DIR}/Gemfile
-
-if [ -z "$SQLITE3_2LINES_GEM" ]
-then
-  sed -i \
-    -e '/gem .sqlite3./d' \
-    "${REDMINE_INSTALL_DIR}/Gemfile"
-else
-  # Delete 2 lines
-  sed -i \
-    -e '/gem .sqlite3./ { N; d; }' \
-    "${REDMINE_INSTALL_DIR}/Gemfile"
-  SQLITE3_GEM=${SQLITE3_2LINES_GEM}
-fi
-
 # Delete test: puma
 sed -i \
   -e '/gem .puma./d' \
   "${REDMINE_INSTALL_DIR}/Gemfile"
 
 (
-  echo "${PG_GEM}";
-  echo "${MYSQL2_GEM}";
-  echo "${SQLITE3_GEM}";
   echo 'gem "puma", "~> 6"';
   echo 'gem "dalli", "~> 3.2.6"';
 ) >> ${REDMINE_INSTALL_DIR}/Gemfile
 
-## some gems complain about missing database.yml, shut them up!
-exec_as_redmine cp ${REDMINE_INSTALL_DIR}/config/database.yml.example ${REDMINE_INSTALL_DIR}/config/database.yml
+## Avoid brittle Gemfile surgery during build.
+## Resolve DB adapter gems via a temporary config/database.yml so bundler
+## can see the intended adapters during bundle install.
+cat > ${REDMINE_INSTALL_DIR}/config/database.yml <<EOF
+mysql2:
+  adapter: mysql2
+
+postgresql:
+  adapter: postgresql
+
+sqlite3:
+  adapter: sqlite3
+  database: tmp/bundler.sqlite3
+EOF
+chown ${REDMINE_USER}: ${REDMINE_INSTALL_DIR}/config/database.yml
 
 # install gems
 cd ${REDMINE_INSTALL_DIR}
@@ -105,6 +83,7 @@ fi
 exec_as_redmine bundle config set path "${REDMINE_INSTALL_DIR}/vendor/bundle"
 exec_as_redmine bundle config set without development test
 exec_as_redmine bundle install -j$(nproc)
+rm -f ${REDMINE_INSTALL_DIR}/config/database.yml
 
 # finalize redmine installation
 exec_as_redmine mkdir -p ${REDMINE_INSTALL_DIR}/tmp ${REDMINE_INSTALL_DIR}/tmp/pdf ${REDMINE_INSTALL_DIR}/tmp/pids ${REDMINE_INSTALL_DIR}/tmp/sockets

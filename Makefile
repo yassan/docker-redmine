@@ -108,7 +108,11 @@ purge:
 
 test-release: generate-certs
 	@echo Clean old run
-	sudo rm -rf $(DATA_DIR)
+	@if [ -e "$(DATA_DIR)" ]; then \
+		echo "ERROR: $(DATA_DIR) already exists."; \
+		echo "For a clean test-release run, back up or remove it manually first."; \
+		exit 1; \
+	fi
 	sudo mkdir -p $(DATA_DIR)/certs
 	sudo cp -f $(CERTS_DIR)/redmine.key $(DATA_DIR)/certs/
 	sudo cp -f $(CERTS_DIR)/redmine.crt $(DATA_DIR)/certs/

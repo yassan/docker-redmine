@@ -5,7 +5,7 @@ GEM_CACHE_DIR="${REDMINE_BUILD_ASSETS_DIR}/cache"
 REDMINE_CACHE_DIR="/var/cache/redmine"
 
 BUILD_DEPENDENCIES="libcurl4-openssl-dev libssl-dev libmagickcore-dev libmagickwand-dev \
-                    libpq-dev libxslt1-dev libffi-dev libyaml-dev \
+                    libpq-dev libxslt1-dev libffi-dev libyaml-dev freetds-dev \
                     "
 
 ## Execute a command as REDMINE_USER

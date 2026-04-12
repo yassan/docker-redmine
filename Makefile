@@ -90,9 +90,6 @@ restart: down up
 logs:
 	@$(COMPOSE) logs -f
 
-config:
-	@$(COMPOSE) config
-
 ps:
 	@$(COMPOSE) ps
 

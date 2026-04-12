@@ -107,7 +107,8 @@ purge:
 	@$(COMPOSE) down -v
 
 test-release: generate-certs
-	@echo Clean old run
+	$(TEST_RELEASE_COMPOSE) down
+	@echo "Checking existing test-release state"
 	@if [ -e "$(DATA_DIR)" ]; then \
 		echo "ERROR: $(DATA_DIR) already exists."; \
 		echo "For a clean test-release run, back up or remove it manually first."; \

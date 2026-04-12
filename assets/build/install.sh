@@ -45,6 +45,7 @@ if [[ ! -f ${REDMINE_CACHE_DIR}/redmine-${REDMINE_VERSION}.tar.gz ]]; then
 fi
 echo "Extracting..."
 exec_as_redmine tar -zxf ${REDMINE_CACHE_DIR}/redmine-${REDMINE_VERSION}.tar.gz --strip=1 -C ${REDMINE_INSTALL_DIR}
+exec_as_redmine rm -f ${REDMINE_INSTALL_DIR}/files/delete.me ${REDMINE_INSTALL_DIR}/log/delete.me
 
 # Normalize runtime gems at build time.
 # Re-add puma and related runtime gems explicitly so they remain available

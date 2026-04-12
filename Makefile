@@ -1,9 +1,11 @@
 IMAGE_REPO ?= sameersbn/redmine
 FLAVOR ?= redmine
 VERSION ?= 6.1.2
+
 TZ ?= Asia/Tokyo
-CERTS_DIR=certs
-CERT_FILES=$(CERTS_DIR)/redmine.crt $(CERTS_DIR)/dhparam.pem
+
+CERTS_DIR ?= certs
+CERT_FILES := $(CERTS_DIR)/redmine.crt $(CERTS_DIR)/dhparam.pem
 
 ifeq ($(FLAVOR),redmine)
 APP_PORT ?= 10083
@@ -27,9 +29,6 @@ DB_HOST ?= postgresql
 DB_PORT ?= 5432
 DB_USER ?= redmine
 DB_PASS ?= password
-
-CERTS_DIR := certs
-CERT_FILES := $(CERTS_DIR)/redmine.crt $(CERTS_DIR)/dhparam.pem
 
 COMPOSE = COMPOSE_PROJECT_NAME=$(PROJECT_NAME) \
 	IMAGE=$(IMAGE) \

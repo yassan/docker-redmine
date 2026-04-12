@@ -13,6 +13,25 @@ exec_as_redmine() {
   sudo -HEu ${REDMINE_USER} "$@"
 }
 
+case "${REDMINE_FLAVOR:-redmine}" in
+  redmine)
+    REDMINE_DIST_NAME="Redmine"
+    REDMINE_ARCHIVE_BASENAME="redmine-${REDMINE_VERSION}"
+    REDMINE_DOWNLOAD_URL="https://www.redmine.org/releases/${REDMINE_ARCHIVE_BASENAME}.tar.gz"
+    ;;
+  redmica)
+    REDMINE_DIST_NAME="Redmica"
+    REDMINE_ARCHIVE_BASENAME="redmica-${REDMINE_VERSION}"
+    REDMINE_DOWNLOAD_URL="https://github.com/redmica/redmica/archive/refs/tags/v${REDMINE_VERSION}.tar.gz"
+    ;;
+  *)
+    echo "Unsupported REDMINE_FLAVOR: ${REDMINE_FLAVOR}. Expected one of: redmine, redmica" >&2
+    exit 1
+    ;;
+esac
+
+REDMINE_ARCHIVE_PATH="${REDMINE_CACHE_DIR}/${REDMINE_ARCHIVE_BASENAME}.tar.gz"
+
 # install build dependencies
 apt-get update
 apt-mark manual '.*' > /dev/null # Mark all packages installed manually so they are not removed when build dependencies are removed
@@ -39,12 +58,12 @@ rm -rf /tmp/cron.${REDMINE_USER}
 # install redmine, use local copy if available
 exec_as_redmine mkdir -p ${REDMINE_INSTALL_DIR}
 ls ${REDMINE_CACHE_DIR}
-if [[ ! -f ${REDMINE_CACHE_DIR}/redmine-${REDMINE_VERSION}.tar.gz ]]; then
-  echo "Downloading Redmine ${REDMINE_VERSION}..."
-  curl -fL "http://www.redmine.org/releases/redmine-${REDMINE_VERSION}.tar.gz" -o ${REDMINE_CACHE_DIR}/redmine-${REDMINE_VERSION}.tar.gz
+if [[ ! -f ${REDMINE_ARCHIVE_PATH} ]]; then
+  echo "Downloading ${REDMINE_DIST_NAME} ${REDMINE_VERSION}..."
+  curl -fL "${REDMINE_DOWNLOAD_URL}" -o ${REDMINE_ARCHIVE_PATH}
 fi
 echo "Extracting..."
-exec_as_redmine tar -zxf ${REDMINE_CACHE_DIR}/redmine-${REDMINE_VERSION}.tar.gz --strip=1 -C ${REDMINE_INSTALL_DIR}
+exec_as_redmine tar -zxf ${REDMINE_ARCHIVE_PATH} --strip=1 -C ${REDMINE_INSTALL_DIR}
 exec_as_redmine rm -f ${REDMINE_INSTALL_DIR}/files/delete.me ${REDMINE_INSTALL_DIR}/log/delete.me
 
 # Normalize runtime gems at build time.

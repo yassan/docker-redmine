@@ -205,7 +205,7 @@ default:
   #
   # This setting is necessary only when CJK characters are used in gantt.
   #
-  # Note that rmagick_font_path in prior to Redmine 4.1.0 has been renamed
+  # Note that rmagick_font_path in prior to Redmine 4.1.1 has been renamed
   # to minimagick_font_path.
   #
   # Examples for Japanese:

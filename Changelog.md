@@ -1,5 +1,8 @@
 # Changelog
 
+**4.1.1-redmica**
+- redmica: upgrade to v4.1.1 <https://github.com/redmica/redmica/releases/tag/v4.1.1>
+
 **4.1.0-redmica**
 - redmica: upgrade to v4.1.0 <https://github.com/redmica/redmica/releases/tag/v4.1.0>
 

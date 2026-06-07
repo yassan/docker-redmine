@@ -1,6 +1,6 @@
 FROM ruby:3.3-slim-bookworm
 
-LABEL maintainer="sameer@damagehead.com"
+LABEL maintainer="yassan0627@gmail.com"
 
 ARG REDMINE_VERSION=6.1.2
 ARG REDMINE_FLAVOR=redmine

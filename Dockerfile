@@ -28,7 +28,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
       gcc g++ make patch pkg-config gettext-base libc6-dev zlib1g-dev libxml2-dev \
       default-libmysqlclient-dev libmariadb-dev libpq5 libyaml-0-2 libcurl4 libssl3 uuid-dev xz-utils \
       libxslt1.1 libffi8 zlib1g gsfonts vim-tiny ghostscript sqlite3 libsqlite3-dev jq curl \
- && update-locale LANG=C.UTF-8 LC_MESSAGES=POSIX
+ && update-locale LANG=C.UTF-8 LC_MESSAGES=POSIX \
+ && rm -rf /var/lib/apt/lists/*
 
 COPY assets/build/ ${REDMINE_BUILD_ASSETS_DIR}/
 

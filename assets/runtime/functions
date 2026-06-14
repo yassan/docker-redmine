@@ -835,6 +835,17 @@ backup_restore_validate() {
     return 1
   fi
 
+  if [[ "${REDMINE_FLAVOR}" == "${backup_redmine_flavor}" && "${current_compatible_redmine_version}" == "${backup_compatible_redmine_version}" && $(vercmp "${REDMINE_VERSION}" "${backup_info_redmine_version}") -lt 0 ]]; then
+    echo
+    echo "ERROR: "
+    echo "  Cannot restore backup for ${backup_redmine_flavor} version ${backup_info_redmine_version}"
+    echo "  on ${REDMINE_FLAVOR} version ${REDMINE_VERSION}."
+    echo "  Only same-flavor restores to the same or newer version are allowed."
+    echo "  Cannot continue. Aborting!"
+    echo
+    return 1
+  fi
+
   ## database adapter check
   if [[ ${database_production_adapter} != ${backup_info_database_adapter} ]]; then
     echo
@@ -1287,8 +1298,9 @@ install_plugins() {
       rm -rf ${REDMINE_DATA_DIR}/tmp/plugin_assets/*
 
       echo "Installing gems required by plugins..."
-      exec_as_redmine bundle config set path "${REDMINE_INSTALL_DIR}/vendor/bundle"
-      exec_as_redmine bundle config set without "development test"
+      exec_as_redmine bundle config set --local path "${REDMINE_INSTALL_DIR}/vendor/bundle"
+      exec_as_redmine bundle config unset --local without || true
+      exec_as_redmine bundle config set --local without "development test"
       exec_as_redmine bundle install -j"$(nproc)" --quiet
 
       echo "Migrating plugins. Please be patient, this could take a while..."

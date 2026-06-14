@@ -82,6 +82,26 @@ redmine_compat_version() {
   esac
 }
 
+redmine_compat_version_or_error() {
+  local result_var=${1}
+  local flavor=${2}
+  local version=${3}
+  local context=${4}
+  local compatible_version
+
+  if ! compatible_version=$(redmine_compat_version "${flavor}" "${version}"); then
+    echo
+    echo "ERROR: "
+    echo "  Unsupported ${flavor} version ${version}."
+    echo "  Cannot determine the compatible Redmine version for ${context}."
+    echo "  Cannot continue. Aborting!"
+    echo
+    return 1
+  fi
+
+  printf -v "${result_var}" '%s' "${compatible_version}"
+}
+
 ## Execute a command as REDMINE_USER
 exec_as_redmine() {
   if [[ $(whoami) == ${REDMINE_USER} ]]; then
@@ -736,7 +756,7 @@ backup_dump_information() {
   eval $(parse_yaml ${REDMINE_CONFIG} config_)
   eval $(parse_yaml ${REDMINE_DATABASE_CONFIG} database_)
   local compatible_redmine_version
-  compatible_redmine_version=$(redmine_compat_version "${REDMINE_FLAVOR}" "${REDMINE_VERSION}")
+  redmine_compat_version_or_error compatible_redmine_version "${REDMINE_FLAVOR}" "${REDMINE_VERSION}" "backup metadata generation" || return 1
   (
     echo "info:"
     echo "  redmine_flavor: ${REDMINE_FLAVOR}"
@@ -797,12 +817,12 @@ backup_restore_validate() {
   local backup_compatible_redmine_version=${backup_info_compatible_redmine_version}
   local current_compatible_redmine_version
   if [[ -z "${backup_compatible_redmine_version}" ]]; then
-    backup_compatible_redmine_version=$(redmine_compat_version "${backup_redmine_flavor}" "${backup_info_redmine_version}")
+    redmine_compat_version_or_error backup_compatible_redmine_version "${backup_redmine_flavor}" "${backup_info_redmine_version}" "backup restore validation" || return 1
   fi
-  current_compatible_redmine_version=$(redmine_compat_version "${REDMINE_FLAVOR}" "${REDMINE_VERSION}")
+  redmine_compat_version_or_error current_compatible_redmine_version "${REDMINE_FLAVOR}" "${REDMINE_VERSION}" "backup restore validation" || return 1
 
   ## version check
-  if [[ $(vercmp ${current_compatible_redmine_version} ${backup_compatible_redmine_version}) -lt 0 ]]; then
+  if [[ $(vercmp "${current_compatible_redmine_version}" "${backup_compatible_redmine_version}") -lt 0 ]]; then
     echo
     echo "ERROR: "
     echo "  Cannot restore backup for ${backup_redmine_flavor} ${backup_info_redmine_version}"
@@ -1128,16 +1148,7 @@ version_check() {
   [[ -f "${REDMINE_DATA_DIR}/tmp/COMPAT_VERSION" ]] && CACHE_COMPAT_VERSION=$(cat "${REDMINE_DATA_DIR}/tmp/COMPAT_VERSION")
   [[ -f "${REDMINE_DATA_DIR}/tmp/IMAGE_VERSION" ]] && CACHE_IMAGE_VERSION=$(cat "${REDMINE_DATA_DIR}/tmp/IMAGE_VERSION")
 
-  CURRENT_COMPAT_VERSION=$(redmine_compat_version "${REDMINE_FLAVOR}" "${REDMINE_VERSION}")
-  if [[ -z "${CURRENT_COMPAT_VERSION}" ]]; then
-    echo
-    echo "ERROR: "
-    echo "  Unsupported ${REDMINE_FLAVOR} version ${REDMINE_VERSION}."
-    echo "  Cannot determine the compatible Redmine version for upgrade checks."
-    echo "  Cannot continue. Aborting!"
-    echo
-    return 1
-  fi
+  redmine_compat_version_or_error CURRENT_COMPAT_VERSION "${REDMINE_FLAVOR}" "${REDMINE_VERSION}" "upgrade checks" || return 1
 
   # Older images only wrote VERSION. Treat that cache as Redmine flavored so
   # Redmine -> Redmica switches do not look like ordinary version downgrades.
@@ -1145,7 +1156,7 @@ version_check() {
     CACHE_FLAVOR=redmine
   fi
   if [[ -z "${CACHE_COMPAT_VERSION}" && -n "${CACHE_VERSION}" ]]; then
-    CACHE_COMPAT_VERSION=$(redmine_compat_version "${CACHE_FLAVOR}" "${CACHE_VERSION}")
+    redmine_compat_version_or_error CACHE_COMPAT_VERSION "${CACHE_FLAVOR}" "${CACHE_VERSION}" "cached upgrade checks" || return 1
   fi
 
   ## version check, only compatible Redmine-version upgrades are allowed.
@@ -1207,7 +1218,7 @@ migrate_database() {
   [[ -f ${REDMINE_DATA_DIR}/tmp/FLAVOR ]] && CACHE_FLAVOR=$(cat ${REDMINE_DATA_DIR}/tmp/FLAVOR)
   [[ -f ${REDMINE_DATA_DIR}/tmp/VERSION ]] && CACHE_VERSION=$(cat ${REDMINE_DATA_DIR}/tmp/VERSION)
   [[ -f ${REDMINE_DATA_DIR}/tmp/COMPAT_VERSION ]] && CACHE_COMPAT_VERSION=$(cat ${REDMINE_DATA_DIR}/tmp/COMPAT_VERSION)
-  CURRENT_COMPAT_VERSION=$(redmine_compat_version "${REDMINE_FLAVOR}" "${REDMINE_VERSION}")
+  redmine_compat_version_or_error CURRENT_COMPAT_VERSION "${REDMINE_FLAVOR}" "${REDMINE_VERSION}" "database migration checks" || return 1
   if [[ ${REDMINE_FLAVOR} != ${CACHE_FLAVOR} || ${REDMINE_VERSION} != ${CACHE_VERSION} || ${CURRENT_COMPAT_VERSION} != ${CACHE_COMPAT_VERSION} ]]; then
     if [[ "${DB_CREATE}" == "true" ]] ; then
       echo "Creating database..."

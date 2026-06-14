@@ -46,6 +46,42 @@ vercmp() {
        '(' "$1.0.0.0" : '[^.]*[.][^.]*[.][^.]*[.]\([^.]*\)' ')' '-' '(' "$2.0.0.0" : '[^.]*[.][^.]*[.][^.]*[.]\([^.]*\)' ')'
 }
 
+redmine_compat_version() {
+  local flavor=${1}
+  local version=${2}
+
+  case "${flavor}" in
+    redmine)
+      echo "${version}"
+      ;;
+    redmica)
+      case "${version}" in
+        4.1.*) echo "6.1.2" ;;
+        3.2.*) echo "6.0.5" ;;
+        3.1.*) echo "6.0.1" ;;
+        3.0.*) echo "5.1.2" ;;
+        2.4.*) echo "5.1.0" ;;
+        2.3.*) echo "5.0.5" ;;
+        2.2.*) echo "5.0.3" ;;
+        2.1.*) echo "5.0.0" ;;
+        2.0.*) echo "4.2.3" ;;
+        1.3.*) echo "4.2.1" ;;
+        1.2.*) echo "4.1.1" ;;
+        1.1.*) echo "4.1.1" ;;
+        1.0.*) echo "4.0.5" ;;
+        *)
+          echo
+          return 1
+          ;;
+      esac
+      ;;
+    *)
+      echo
+      return 1
+      ;;
+  esac
+}
+
 ## Execute a command as REDMINE_USER
 exec_as_redmine() {
   if [[ $(whoami) == ${REDMINE_USER} ]]; then
@@ -699,9 +735,13 @@ backup_dump_directory() {
 backup_dump_information() {
   eval $(parse_yaml ${REDMINE_CONFIG} config_)
   eval $(parse_yaml ${REDMINE_DATABASE_CONFIG} database_)
+  local compatible_redmine_version
+  compatible_redmine_version=$(redmine_compat_version "${REDMINE_FLAVOR}" "${REDMINE_VERSION}")
   (
     echo "info:"
+    echo "  redmine_flavor: ${REDMINE_FLAVOR}"
     echo "  redmine_version: ${REDMINE_VERSION}"
+    echo "  compatible_redmine_version: ${compatible_redmine_version}"
     echo "  database_adapter: ${database_production_adapter}"
     echo "  created_at: $(date)"
   ) > ${config_default_backup_storage_path}/backup_information.yml
@@ -753,13 +793,23 @@ backup_restore_validate() {
   eval $(parse_yaml ${REDMINE_DATABASE_CONFIG} database_)
   eval $(parse_yaml ${config_default_backup_storage_path}/backup_information.yml backup_)
 
+  local backup_redmine_flavor=${backup_info_redmine_flavor:-redmine}
+  local backup_compatible_redmine_version=${backup_info_compatible_redmine_version}
+  local current_compatible_redmine_version
+  if [[ -z "${backup_compatible_redmine_version}" ]]; then
+    backup_compatible_redmine_version=$(redmine_compat_version "${backup_redmine_flavor}" "${backup_info_redmine_version}")
+  fi
+  current_compatible_redmine_version=$(redmine_compat_version "${REDMINE_FLAVOR}" "${REDMINE_VERSION}")
+
   ## version check
-  if [[ $(vercmp ${REDMINE_VERSION} ${backup_info_redmine_version}) -lt 0 ]]; then
+  if [[ $(vercmp ${current_compatible_redmine_version} ${backup_compatible_redmine_version}) -lt 0 ]]; then
     echo
     echo "ERROR: "
-    echo "  Cannot restore backup for version ${backup_info_redmine_version} on a ${REDMINE_VERSION} instance."
-    echo "  You can only restore backups generated for versions <= ${REDMINE_VERSION}."
-    echo "  Please use sameersbn/redmine:${backup_info_redmine_version} to restore this backup."
+    echo "  Cannot restore backup for ${backup_redmine_flavor} ${backup_info_redmine_version}"
+    echo "  (compatible with Redmine ${backup_compatible_redmine_version})"
+    echo "  on ${REDMINE_FLAVOR} ${REDMINE_VERSION}"
+    echo "  (compatible with Redmine ${current_compatible_redmine_version})."
+    echo "  You can only restore backups generated for compatible Redmine versions <= ${current_compatible_redmine_version}."
     echo "  Cannot continue. Aborting!"
     echo
     return 1
@@ -1069,17 +1119,54 @@ configure_nginx() {
 }
 
 version_check() {
+  CACHE_FLAVOR=
   CACHE_VERSION=
+  CACHE_COMPAT_VERSION=
   CACHE_IMAGE_VERSION=
+  [[ -f "${REDMINE_DATA_DIR}/tmp/FLAVOR" ]] && CACHE_FLAVOR=$(cat "${REDMINE_DATA_DIR}/tmp/FLAVOR")
   [[ -f "${REDMINE_DATA_DIR}/tmp/VERSION" ]] && CACHE_VERSION=$(cat "${REDMINE_DATA_DIR}/tmp/VERSION")
+  [[ -f "${REDMINE_DATA_DIR}/tmp/COMPAT_VERSION" ]] && CACHE_COMPAT_VERSION=$(cat "${REDMINE_DATA_DIR}/tmp/COMPAT_VERSION")
   [[ -f "${REDMINE_DATA_DIR}/tmp/IMAGE_VERSION" ]] && CACHE_IMAGE_VERSION=$(cat "${REDMINE_DATA_DIR}/tmp/IMAGE_VERSION")
 
-  ## version check, only redmine upgrades are allowed
-  if [[ -n "${CACHE_VERSION}" && $(vercmp "${REDMINE_VERSION}" "${CACHE_VERSION}") -lt 0 ]]; then
+  CURRENT_COMPAT_VERSION=$(redmine_compat_version "${REDMINE_FLAVOR}" "${REDMINE_VERSION}")
+  if [[ -z "${CURRENT_COMPAT_VERSION}" ]]; then
     echo
     echo "ERROR: "
-    echo "  Cannot downgrade from Redmine version ${CACHE_VERSION} to ${REDMINE_VERSION}."
-    echo "  Only upgrades are allowed. Please use sameersbn/redmine:${CACHE_VERSION} or higher."
+    echo "  Unsupported ${REDMINE_FLAVOR} version ${REDMINE_VERSION}."
+    echo "  Cannot determine the compatible Redmine version for upgrade checks."
+    echo "  Cannot continue. Aborting!"
+    echo
+    return 1
+  fi
+
+  # Older images only wrote VERSION. Treat that cache as Redmine flavored so
+  # Redmine -> Redmica switches do not look like ordinary version downgrades.
+  if [[ -z "${CACHE_FLAVOR}" && -n "${CACHE_VERSION}" ]]; then
+    CACHE_FLAVOR=redmine
+  fi
+  if [[ -z "${CACHE_COMPAT_VERSION}" && -n "${CACHE_VERSION}" ]]; then
+    CACHE_COMPAT_VERSION=$(redmine_compat_version "${CACHE_FLAVOR}" "${CACHE_VERSION}")
+  fi
+
+  ## version check, only compatible Redmine-version upgrades are allowed.
+  if [[ -n "${CACHE_COMPAT_VERSION}" && $(vercmp "${CURRENT_COMPAT_VERSION}" "${CACHE_COMPAT_VERSION}") -lt 0 ]]; then
+    echo
+    echo "ERROR: "
+    echo "  Cannot downgrade from ${CACHE_FLAVOR} ${CACHE_VERSION} (compatible with Redmine ${CACHE_COMPAT_VERSION})"
+    echo "  to ${REDMINE_FLAVOR} ${REDMINE_VERSION} (compatible with Redmine ${CURRENT_COMPAT_VERSION})."
+    echo "  Only compatible Redmine-version upgrades are allowed."
+    echo "  Cannot continue. Aborting!"
+    echo
+    return 1
+  fi
+
+  ## If the compatible Redmine version is unchanged, still prevent public-version
+  ## downgrades within the same flavor.
+  if [[ "${REDMINE_FLAVOR}" == "${CACHE_FLAVOR}" && -n "${CACHE_VERSION}" && "${CURRENT_COMPAT_VERSION}" == "${CACHE_COMPAT_VERSION}" && $(vercmp "${REDMINE_VERSION}" "${CACHE_VERSION}") -lt 0 ]]; then
+    echo
+    echo "ERROR: "
+    echo "  Cannot downgrade from ${REDMINE_FLAVOR} version ${CACHE_VERSION} to ${REDMINE_VERSION}."
+    echo "  Only upgrades are allowed within the same flavor."
     echo "  Cannot continue. Aborting!"
     echo
     return 1
@@ -1104,6 +1191,8 @@ version_check() {
   rm -rf "${REDMINE_INSTALL_DIR}/vendor/bundle" "${REDMINE_INSTALL_DIR}/Gemfile.lock"
 
   # Track docker image version in tmp cache
+  echo ${REDMINE_FLAVOR} | exec_as_redmine tee ${REDMINE_DATA_DIR}/tmp/FLAVOR >/dev/null
+  echo ${CURRENT_COMPAT_VERSION} | exec_as_redmine tee ${REDMINE_DATA_DIR}/tmp/COMPAT_VERSION >/dev/null
   echo ${IMAGE_VERSION} | exec_as_redmine tee ${REDMINE_DATA_DIR}/tmp/IMAGE_VERSION >/dev/null
 
   # symlink to ${REDMINE_DATA_DIR}/tmp/bundle
@@ -1112,9 +1201,14 @@ version_check() {
 }
 
 migrate_database() {
+  CACHE_FLAVOR=
   CACHE_VERSION=
+  CACHE_COMPAT_VERSION=
+  [[ -f ${REDMINE_DATA_DIR}/tmp/FLAVOR ]] && CACHE_FLAVOR=$(cat ${REDMINE_DATA_DIR}/tmp/FLAVOR)
   [[ -f ${REDMINE_DATA_DIR}/tmp/VERSION ]] && CACHE_VERSION=$(cat ${REDMINE_DATA_DIR}/tmp/VERSION)
-  if [[ ${REDMINE_VERSION} != ${CACHE_VERSION} ]]; then
+  [[ -f ${REDMINE_DATA_DIR}/tmp/COMPAT_VERSION ]] && CACHE_COMPAT_VERSION=$(cat ${REDMINE_DATA_DIR}/tmp/COMPAT_VERSION)
+  CURRENT_COMPAT_VERSION=$(redmine_compat_version "${REDMINE_FLAVOR}" "${REDMINE_VERSION}")
+  if [[ ${REDMINE_FLAVOR} != ${CACHE_FLAVOR} || ${REDMINE_VERSION} != ${CACHE_VERSION} || ${CURRENT_COMPAT_VERSION} != ${CACHE_COMPAT_VERSION} ]]; then
     if [[ "${DB_CREATE}" == "true" ]] ; then
       echo "Creating database..."
       if ! exec_as_redmine bundle exec rake db:create >/dev/null
@@ -1137,7 +1231,9 @@ EOM
     exec_as_redmine bundle exec rake tmp:sockets:clear >/dev/null
 
     # Now that database has been migrated, update version file
-    echo ${REDMINE_VERSION} | exec_as_redmine tee --append ${REDMINE_DATA_DIR}/tmp/VERSION >/dev/null
+    echo ${REDMINE_FLAVOR} | exec_as_redmine tee ${REDMINE_DATA_DIR}/tmp/FLAVOR >/dev/null
+    echo ${CURRENT_COMPAT_VERSION} | exec_as_redmine tee ${REDMINE_DATA_DIR}/tmp/COMPAT_VERSION >/dev/null
+    echo ${REDMINE_VERSION} | exec_as_redmine tee ${REDMINE_DATA_DIR}/tmp/VERSION >/dev/null
     export REDMINE_WAS_UPDATED=yes
   fi
 }
@@ -1170,9 +1266,8 @@ install_plugins() {
       rm -rf ${REDMINE_DATA_DIR}/tmp/plugin_assets/*
 
       echo "Installing gems required by plugins..."
-      exec_as_redmine bundle config set --local path "${REDMINE_INSTALL_DIR}/vendor/bundle"
-      exec_as_redmine bundle config unset --local without || true
-      exec_as_redmine bundle config set --local without "development test"
+      exec_as_redmine bundle config set path "${REDMINE_INSTALL_DIR}/vendor/bundle"
+      exec_as_redmine bundle config set without "development test"
       exec_as_redmine bundle install -j"$(nproc)" --quiet
 
       echo "Migrating plugins. Please be patient, this could take a while..."

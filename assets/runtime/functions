@@ -1195,16 +1195,16 @@ version_check() {
 
   # Setup cache
   # copy the installed gems and Gemfile.lock to ${REDMINE_DATA_DIR}/tmp/
-  if [[ ! -d ${REDMINE_DATA_DIR}/tmp/bundle ]]; then
+  if [[ ! -d "${REDMINE_DATA_DIR}/tmp/bundle" ]]; then
     exec_as_redmine cp -a "${REDMINE_INSTALL_DIR}/vendor/bundle" "${REDMINE_DATA_DIR}/tmp/"
     exec_as_redmine cp -a "${REDMINE_INSTALL_DIR}/Gemfile.lock" "${REDMINE_DATA_DIR}/tmp/"
   fi
   rm -rf "${REDMINE_INSTALL_DIR}/vendor/bundle" "${REDMINE_INSTALL_DIR}/Gemfile.lock"
 
   # Track docker image version in tmp cache
-  echo ${REDMINE_FLAVOR} | exec_as_redmine tee ${REDMINE_DATA_DIR}/tmp/FLAVOR >/dev/null
-  echo ${CURRENT_COMPAT_VERSION} | exec_as_redmine tee ${REDMINE_DATA_DIR}/tmp/COMPAT_VERSION >/dev/null
-  echo ${IMAGE_VERSION} | exec_as_redmine tee ${REDMINE_DATA_DIR}/tmp/IMAGE_VERSION >/dev/null
+  printf '%s\n' "${REDMINE_FLAVOR}" | exec_as_redmine tee "${REDMINE_DATA_DIR}/tmp/FLAVOR" >/dev/null
+  printf '%s\n' "${CURRENT_COMPAT_VERSION}" | exec_as_redmine tee "${REDMINE_DATA_DIR}/tmp/COMPAT_VERSION" >/dev/null
+  printf '%s\n' "${IMAGE_VERSION}" | exec_as_redmine tee "${REDMINE_DATA_DIR}/tmp/IMAGE_VERSION" >/dev/null
 
   # symlink to ${REDMINE_DATA_DIR}/tmp/bundle
   ln -sf "${REDMINE_DATA_DIR}/tmp/bundle" "${REDMINE_INSTALL_DIR}/vendor/bundle"
@@ -1215,11 +1215,11 @@ migrate_database() {
   CACHE_FLAVOR=
   CACHE_VERSION=
   CACHE_COMPAT_VERSION=
-  [[ -f ${REDMINE_DATA_DIR}/tmp/FLAVOR ]] && CACHE_FLAVOR=$(cat ${REDMINE_DATA_DIR}/tmp/FLAVOR)
-  [[ -f ${REDMINE_DATA_DIR}/tmp/VERSION ]] && CACHE_VERSION=$(cat ${REDMINE_DATA_DIR}/tmp/VERSION)
-  [[ -f ${REDMINE_DATA_DIR}/tmp/COMPAT_VERSION ]] && CACHE_COMPAT_VERSION=$(cat ${REDMINE_DATA_DIR}/tmp/COMPAT_VERSION)
+  [[ -f "${REDMINE_DATA_DIR}/tmp/FLAVOR" ]] && CACHE_FLAVOR=$(cat "${REDMINE_DATA_DIR}/tmp/FLAVOR")
+  [[ -f "${REDMINE_DATA_DIR}/tmp/VERSION" ]] && CACHE_VERSION=$(cat "${REDMINE_DATA_DIR}/tmp/VERSION")
+  [[ -f "${REDMINE_DATA_DIR}/tmp/COMPAT_VERSION" ]] && CACHE_COMPAT_VERSION=$(cat "${REDMINE_DATA_DIR}/tmp/COMPAT_VERSION")
   redmine_compat_version_or_error CURRENT_COMPAT_VERSION "${REDMINE_FLAVOR}" "${REDMINE_VERSION}" "database migration checks" || return 1
-  if [[ ${REDMINE_FLAVOR} != ${CACHE_FLAVOR} || ${REDMINE_VERSION} != ${CACHE_VERSION} || ${CURRENT_COMPAT_VERSION} != ${CACHE_COMPAT_VERSION} ]]; then
+  if [[ "${REDMINE_FLAVOR}" != "${CACHE_FLAVOR}" || "${REDMINE_VERSION}" != "${CACHE_VERSION}" || "${CURRENT_COMPAT_VERSION}" != "${CACHE_COMPAT_VERSION}" ]]; then
     if [[ "${DB_CREATE}" == "true" ]] ; then
       echo "Creating database..."
       if ! exec_as_redmine bundle exec rake db:create >/dev/null
@@ -1242,9 +1242,9 @@ EOM
     exec_as_redmine bundle exec rake tmp:sockets:clear >/dev/null
 
     # Now that database has been migrated, update version file
-    echo ${REDMINE_FLAVOR} | exec_as_redmine tee ${REDMINE_DATA_DIR}/tmp/FLAVOR >/dev/null
-    echo ${CURRENT_COMPAT_VERSION} | exec_as_redmine tee ${REDMINE_DATA_DIR}/tmp/COMPAT_VERSION >/dev/null
-    echo ${REDMINE_VERSION} | exec_as_redmine tee ${REDMINE_DATA_DIR}/tmp/VERSION >/dev/null
+    printf '%s\n' "${REDMINE_FLAVOR}" | exec_as_redmine tee "${REDMINE_DATA_DIR}/tmp/FLAVOR" >/dev/null
+    printf '%s\n' "${CURRENT_COMPAT_VERSION}" | exec_as_redmine tee "${REDMINE_DATA_DIR}/tmp/COMPAT_VERSION" >/dev/null
+    printf '%s\n' "${REDMINE_VERSION}" | exec_as_redmine tee "${REDMINE_DATA_DIR}/tmp/VERSION" >/dev/null
     export REDMINE_WAS_UPDATED=yes
   fi
 }

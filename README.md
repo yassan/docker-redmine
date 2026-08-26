@@ -39,7 +39,7 @@ The image can be built in two flavors:
 
 Current defaults in this repository:
 
-- `redmine`: `6.1.2`
+- `redmine`: `6.1.4`
 - `redmica`: `4.1.1`
 
 The flavor is selected at build time through `REDMINE_FLAVOR`, and the application archive is downloaded accordingly.
@@ -70,7 +70,7 @@ make up-redmine
 This uses the defaults below:
 
 - flavor: `redmine`
-- version: `6.1.2`
+- version: `6.1.4`
 - app port: `10083`
 - database name: `redmine_production`
 
@@ -101,35 +101,35 @@ Please allow the application a short time to bootstrap on the first run.
 ### Build
 
 ```bash
-make build FLAVOR=redmine VERSION=6.1.2
+make build FLAVOR=redmine VERSION=6.1.4
 make build FLAVOR=redmica VERSION=4.1.1
 ```
 
 ### Start
 
 ```bash
-make up FLAVOR=redmine VERSION=6.1.2 APP_PORT=10083
+make up FLAVOR=redmine VERSION=6.1.4 APP_PORT=10083
 make up FLAVOR=redmica VERSION=4.1.1 APP_PORT=10084
 ```
 
 ### Stop
 
 ```bash
-make down FLAVOR=redmine VERSION=6.1.2
+make down FLAVOR=redmine VERSION=6.1.4
 make down FLAVOR=redmica VERSION=4.1.1
 ```
 
 ### Logs
 
 ```bash
-make logs FLAVOR=redmine VERSION=6.1.2
+make logs FLAVOR=redmine VERSION=6.1.4
 make logs FLAVOR=redmica VERSION=4.1.1
 ```
 
 ### Render Effective Compose Config
 
 ```bash
-make config FLAVOR=redmine VERSION=6.1.2
+make config FLAVOR=redmine VERSION=6.1.4
 make config FLAVOR=redmica VERSION=4.1.1
 ```
 

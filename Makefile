@@ -1,6 +1,6 @@
 IMAGE_REPO ?= yassan/redmine
 FLAVOR ?= redmine
-VERSION ?= 6.1.2
+VERSION ?= 6.1.4
 
 TZ ?= Asia/Tokyo
 
@@ -57,10 +57,10 @@ help:
 	@echo ""
 	@echo "-- Help Menu"
 	@echo ""
-	@echo "   make build FLAVOR=redmine VERSION=6.1.2"
-	@echo "   make build FLAVOR=redmica VERSION=4.1.1"
-	@echo "   make up FLAVOR=redmine VERSION=6.1.2 APP_PORT=10083"
-	@echo "   make up FLAVOR=redmica VERSION=4.1.1 APP_PORT=10084"
+	@echo "   make build FLAVOR=redmine VERSION=6.1.4"
+	@echo "   make build FLAVOR=redmica VERSION=4.1.4"
+	@echo "   make up FLAVOR=redmine VERSION=6.1.4 APP_PORT=10083"
+	@echo "   make up FLAVOR=redmica VERSION=4.1.4 APP_PORT=10084"
 	@echo "   make down FLAVOR=redmine"
 	@echo "   make down FLAVOR=redmica"
 	@echo "   make logs FLAVOR=redmine"
@@ -149,31 +149,31 @@ release:
 	@echo "Open https://github.com/sameersbn/docker-redmine/releases and Draft new release"
 
 build-redmine:
-	$(MAKE) build FLAVOR=redmine VERSION=6.1.2 APP_PORT=10083
+	$(MAKE) build FLAVOR=redmine VERSION=6.1.4 APP_PORT=10083
 
 build-redmica:
-	$(MAKE) build FLAVOR=redmica VERSION=4.1.1 APP_PORT=10084
+	$(MAKE) build FLAVOR=redmica VERSION=4.1.4 APP_PORT=10084
 
 up-redmine:
-	$(MAKE) up FLAVOR=redmine VERSION=6.1.2 APP_PORT=10083
+	$(MAKE) up FLAVOR=redmine VERSION=6.1.4 APP_PORT=10083
 
 up-redmica:
-	$(MAKE) up FLAVOR=redmica VERSION=4.1.1 APP_PORT=10084
+	$(MAKE) up FLAVOR=redmica VERSION=4.1.4 APP_PORT=10084
 
 down-redmine:
-	$(MAKE) down FLAVOR=redmine VERSION=6.1.2 APP_PORT=10083
+	$(MAKE) down FLAVOR=redmine VERSION=6.1.4 APP_PORT=10083
 
 down-redmica:
-	$(MAKE) down FLAVOR=redmica VERSION=4.1.1 APP_PORT=10084
+	$(MAKE) down FLAVOR=redmica VERSION=4.1.4 APP_PORT=10084
 
 logs-redmine:
-	$(MAKE) logs FLAVOR=redmine VERSION=6.1.2 APP_PORT=10083
+	$(MAKE) logs FLAVOR=redmine VERSION=6.1.4 APP_PORT=10083
 
 logs-redmica:
-	$(MAKE) logs FLAVOR=redmica VERSION=4.1.1 APP_PORT=10084
+	$(MAKE) logs FLAVOR=redmica VERSION=4.1.4 APP_PORT=10084
 
 config-redmine:
-	$(MAKE) config FLAVOR=redmine VERSION=6.1.2 APP_PORT=10083
+	$(MAKE) config FLAVOR=redmine VERSION=6.1.4 APP_PORT=10083
 
 config-redmica:
-	$(MAKE) config FLAVOR=redmica VERSION=4.1.1 APP_PORT=10084
+	$(MAKE) config FLAVOR=redmica VERSION=4.1.4 APP_PORT=10084

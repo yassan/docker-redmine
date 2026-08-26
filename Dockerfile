@@ -2,7 +2,7 @@ FROM ruby:3.4-slim-bookworm
 
 LABEL maintainer="yassan0627@gmail.com"
 
-ARG REDMINE_VERSION=6.1.2
+ARG REDMINE_VERSION=6.1.4
 ARG REDMINE_FLAVOR=redmine
 
 ENV REDMINE_VERSION=${REDMINE_VERSION} \

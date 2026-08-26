@@ -20,7 +20,7 @@ services:
 
   redmine:
     build: ./
-    image: sameersbn/redmine:6.1.2
+    image: docker.io/yassan/redmine:redmine-6.1.4
     depends_on:
       - database
     environment:

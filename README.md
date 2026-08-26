@@ -150,7 +150,7 @@ Important parameters:
 - `DB_USER`
 - `DB_PASS`
 - `DB_NAME`
-- `IMAGE_REPO`: image repository name, default `sameersbn/redmine`
+- `IMAGE_REPO`: image repository name, default `yassan/redmine`
 
 Example:
 

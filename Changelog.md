@@ -1,5 +1,9 @@
 # Changelog
 
+**redmine6.1.4-redmica4.1.4**
+- redmine: upgrade to v6.1.4 <https://www.redmine.org/news/162>
+- redmica: upgrade to v4.1.4 <https://github.com/redmica/redmica/releases/tag/v4.1.4>
+
 **4.1.1-redmica**
 - redmica: upgrade to v4.1.1 <https://github.com/redmica/redmica/releases/tag/v4.1.1>
 
